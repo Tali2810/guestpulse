@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GuestPulse | Hotel Feedback Intelligence</title>
+<style>
+:root{--navy:#14283f;--ink:#24384d;--muted:#718096;--line:#e6edf2;--bg:#f4f7fa;--teal:#167c80;--green:#279b72;--red:#d65b61;--amber:#d79a36;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1160px;margin:auto;padding:26px 24px 40px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.brand{display:flex;gap:12px;align-items:center}.mark{height:43px;width:43px;border-radius:13px;background:var(--navy);color:white;display:grid;place-items:center;font-size:22px}
+h1{margin:0;color:var(--navy);font-size:23px}.tag{font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-top:4px}.live{font-size:11px;font-weight:700;color:#257653;background:#e8f6ef;padding:8px 12px;border-radius:30px}
+.hero{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:18px}.hero h2{margin:0 0 6px;font-size:26px;color:var(--navy)}.hero p{margin:0;color:var(--muted);font-size:13px}
+.panel,.card{background:white;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 15px #17344c08}.panel{padding:20px;margin-bottom:18px}.panel h3,.card h3{margin:0;color:var(--navy);font-size:15px}
+.mode{display:flex;gap:8px;margin:15px 0}.mode button{border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:8px;color:#65768a;cursor:pointer;font-weight:650}.mode button.active{background:var(--navy);border-color:var(--navy);color:white}
+textarea{width:100%;min-height:115px;resize:vertical;border:1px solid #dce5eb;border-radius:10px;padding:13px;font:13px/1.5 inherit;color:var(--ink);outline:none}textarea:focus,input:focus{border-color:var(--teal)}
+.filebox{border:1.5px dashed #cbd8e1;border-radius:11px;padding:22px;text-align:center;color:var(--muted);font-size:13px}.filebox input{display:block;margin:12px auto 0;max-width:100%}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px}.hint{font-size:11px;color:var(--muted)}.primary{border:0;border-radius:9px;background:var(--teal);color:white;padding:11px 18px;font-weight:700;cursor:pointer}.primary:disabled{opacity:.55;cursor:wait}
+.error{display:none;margin-top:12px;padding:12px;border-radius:9px;background:#fff0f0;color:#a43f46;font-size:12px;white-space:pre-wrap}.loading{display:none;color:var(--teal);font-size:12px;margin-top:12px}
+.tabs{display:flex;gap:7px;margin:0 0 16px}.tab{border:1px solid var(--line);background:white;color:#627386;padding:8px 13px;border-radius:8px;font-size:11px;font-weight:650;cursor:pointer}.tab.active{background:var(--navy);color:white;border-color:var(--navy)}
+.view{display:none}.view.active{display:block}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:15px}.card{padding:18px}.label{font-size:11px;color:var(--muted);font-weight:700}.value{font-size:30px;font-weight:800;color:var(--navy);margin:10px 0 4px}.note{font-size:11px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1.35fr;gap:15px;margin-bottom:15px}.bottom{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.sentiment{display:flex;align-items:center;gap:22px;min-height:175px}.donut{height:142px;width:142px;border-radius:50%;position:relative;flex-shrink:0;background:conic-gradient(var(--green) 0 0%,var(--red) 0 0%,var(--amber) 0 100%)}
+.donut:after{content:attr(data-total);white-space:pre;position:absolute;inset:23px;background:#fff;border-radius:50%;display:grid;place-content:center;text-align:center;font-size:17px;font-weight:800;color:var(--navy)}
+.legend{display:grid;gap:13px;width:100%}.leg{display:flex;justify-content:space-between;font-size:12px}.leg span{color:#586b7f}.leg b{color:var(--navy)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}
+.bars{display:grid;gap:15px;margin-top:20px}.bar{display:grid;grid-template-columns:150px 1fr 25px;gap:10px;align-items:center;font-size:11px}.barname{color:#536477}.track{height:9px;background:#edf2f5;border-radius:10px;overflow:hidden}.fill{height:100%;background:var(--amber);border-radius:10px}.count{text-align:right;font-weight:800}
+.item{padding:12px 0;border-bottom:1px solid var(--line);display:flex;gap:10px}.item:last-child{border:0}.badge{font-size:9px;font-weight:800;padding:5px 7px;border-radius:5px;height:max-content;min-width:54px;text-align:center}.high{background:#fff0f0;color:#b34449}.medium{background:#fff5e4;color:#966a20}.low{background:#edf4fb;color:#496c91}.item strong{display:block;font-size:12px;margin-bottom:4px}.item p{font-size:11px;color:var(--muted);margin:0;line-height:1.5}
+.empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}.report{white-space:pre-wrap;font:12px/1.6 ui-monospace,Consolas,monospace;background:#f8fafc;border:1px solid var(--line);padding:14px;border-radius:9px;max-height:420px;overflow:auto}
+footer{font-size:10px;color:#8a98a6;display:flex;justify-content:space-between;margin-top:18px}
+@media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.two,.bottom{grid-template-columns:1fr}.hero{display:block}.hero p{margin-bottom:12px}.bar{grid-template-columns:125px 1fr 22px}}
+@media(max-width:480px){.wrap{padding:16px}.sentiment{flex-direction:column}.metrics{gap:8px}.card{padding:14px}.value{font-size:25px}}
+</style></head>
+<body><div class="wrap">
+<header><div class="brand"><div class="mark">✦</div><div><h1>GuestPulse</h1><div class="tag">HOSPITALITY INTELLIGENCE</div></div></div><div class="live">● LIVE WORKFLOW</div></header>
+<section class="hero"><div><h2>Guest Feedback Overview</h2><p>Turn guest reviews into clear operational priorities.</p></div></section>
+<section class="panel">
+<h3>Analyze guest feedback</h3>
+<div class="mode"><button class="active" id="textMode">Paste reviews</button><button id="fileMode">Upload a file</button></div>
+<div id="textInput"><textarea id="reviews" placeholder="Paste guest reviews here. Include one review after another..."></textarea></div>
+<div id="fileInput" class="filebox" style="display:none">Upload a CSV or supported document file<input type="file" id="file" accept=".csv,.txt,.pdf,.doc,.docx,.xlsx"></div>
+<div class="actions"><span class="hint">Your feedback is sent to your private Dify workflow.</span><button class="primary" id="analyze">Analyze feedback →</button></div>
+<div class="loading" id="loading">Analyzing reviews with GuestPulse… this may take a moment.</div><div class="error" id="error"></div>
+</section>
+<nav class="tabs"><button class="tab active" data-view="overview">Overview</button><button class="tab" data-view="issues">Guest issues</button><button class="tab" data-view="strengths">What guests love</button><button class="tab" data-view="report">Full report</button></nav>
+<section id="overview" class="view active"><div id="dashboard"><div class="card empty">Run an analysis to see your live dashboard.</div></div></section>
+<section id="issues" class="view"><div class="card"><h3>Recurring guest issues</h3><div id="issuesList" class="empty">No analysis yet.</div></div></section>
+<section id="strengths" class="view"><div class="card"><h3>What guests appreciate</h3><div id="strengthList" class="empty">No analysis yet.</div></div></section>
+<section id="report" class="view"><div class="card"><h3>Management report</h3><div id="reportText" class="empty">No report yet.</div></div></section>
+<footer><span>GuestPulse · Feedback Intelligence</span><span>Powered by Dify Workflow API</span></footer>
+</div>
+<script>
+let mode="text", latest=null;
+const $=id=>document.getElementById(id);
+$("textMode").onclick=()=>setMode("text");$("fileMode").onclick=()=>setMode("file");
+function setMode(m){mode=m;$("textMode").classList.toggle("active",m==="text");$("fileMode").classList.toggle("active",m==="file");$("textInput").style.display=m==="text"?"block":"none";$("fileInput").style.display=m==="file"?"block":"none";}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));b.classList.add("active");$(b.dataset.view).classList.add("active");});
+$("analyze").onclick=async()=>{
+  $("error").style.display="none";$("loading").style.display="block";$("analyze").disabled=true;
+  try{
+    const fd=new FormData();
+    if(mode==="text"){const value=$("reviews").value.trim();if(!value)throw new Error("Paste guest reviews first.");fd.append("guest_feedback",value);}
+    else{const f=$("file").files[0];if(!f)throw new Error("Choose a file first.");fd.append("file",f);}
+    const response=await fetch("/api/analyze",{method:"POST",body:fd});
+    const result=await response.json();if(!response.ok)throw new Error(result.error||"Analysis failed.");
+    latest=result.data;render(result.data,result.report||"");document.querySelector('[data-view="overview"]').click();
+  }catch(e){$("error").textContent=e.message;$("error").style.display="block";}
+  finally{$("loading").style.display="none";$("analyze").disabled=false;}
+};
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function arr(v){return Array.isArray(v)?v:[];}
+function priorityClass(p){const x=String(p||"").toLowerCase();return x==="high"?"high":x==="low"?"low":"medium";}
+function bars(items,color){if(!items.length)return '<div class="empty">No category data returned.</div>';const max=Math.max(1,...items.map(x=>Number(x.count)||0));return '<div class="bars">'+items.map(x=>`<div class="bar"><span class="barname">${esc(x.category)}</span><div class="track"><div class="fill" style="width:${Math.max(0,Number(x.count)||0)/max*100}%;background:${color||'var(--amber)'}"></div></div><span class="count">${Number(x.count)||0}</span></div>`).join("")+'</div>';}
+function render(d,report){
+ const total=Number(d.total_reviews)||0,pos=Number(d.positive_count)||0,neg=Number(d.negative_count)||0,mix=Number(d.mixed_count)||0;
+ const pp=total?pos/total*100:0,np=total?neg/total*100:0,mp=total?mix/total*100:0;
+ $("dashboard").innerHTML=`
+ <div class="metrics">
+ <div class="card"><div class="label">REVIEWS ANALYZED</div><div class="value">${total}</div><div class="note">Current analysis</div></div>
+ <div class="card"><div class="label"><i class="dot" style="background:var(--green)"></i>POSITIVE</div><div class="value">${Math.round(pp)}%</div><div class="note">${pos} reviews</div></div>
+ <div class="card"><div class="label"><i class="dot" style="background:var(--red)"></i>NEGATIVE</div><div class="value">${Math.round(np)}%</div><div class="note">${neg} reviews</div></div>
+ <div class="card"><div class="label"><i class="dot" style="background:var(--amber)"></i>MIXED / NEUTRAL</div><div class="value">${Math.round(mp)}%</div><div class="note">${mix} reviews</div></div></div>
+ <div class="two"><div class="card"><h3>Guest sentiment</h3><div class="sentiment"><div class="donut" data-total="${total}\\nreviews" style="background:conic-gradient(var(--green) 0 ${pp}%,var(--red) ${pp}% ${pp+np}%,var(--amber) ${pp+np}% 100%)"></div><div class="legend"><div class="leg"><span><i class="dot" style="background:var(--green)"></i>Positive</span><b>${pos} · ${Math.round(pp)}%</b></div><div class="leg"><span><i class="dot" style="background:var(--red)"></i>Negative</span><b>${neg} · ${Math.round(np)}%</b></div><div class="leg"><span><i class="dot" style="background:var(--amber)"></i>Mixed / Neutral</span><b>${mix} · ${Math.round(mp)}%</b></div></div></div></div>
+ <div class="card"><h3>Most reported issues</h3>${bars(arr(d.issues).slice(0,6))}</div></div>
+ <div class="bottom"><div class="card"><h3>What guests appreciate</h3>${bars(arr(d.positive_themes).slice(0,6),"var(--green)")}</div><div class="card"><h3>AI recommended priorities</h3>${arr(d.recommendations).slice(0,6).map(x=>`<div class="item"><span class="badge ${priorityClass(x.priority)}">${esc(x.priority||"MEDIUM").toUpperCase()}</span><div><strong>${esc(x.action)}</strong><p>${esc(x.reason)}</p></div></div>`).join("")||'<div class="empty">No recommendations returned.</div>'}</div></div>`;
+ $("issuesList").innerHTML=bars(arr(d.issues));
+ $("strengthList").innerHTML=bars(arr(d.positive_themes),"var(--green)");
+ $("reportText").innerHTML=report?`<div class="report">${esc(report)}</div>`:'<div class="empty">Structured data received; no text report returned.</div>';
+}
+</script></body></html>
