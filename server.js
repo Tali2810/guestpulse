@@ -15,45 +15,39 @@ const upload = multer({
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Dify configuration
+const PORT = process.env.PORT || 3000;
+
 const DIFY_BASE_URL = (
   process.env.DIFY_BASE_URL || "https://api.dify.ai/v1"
 ).replace(/\/+$/, "");
 
-const DIFY_API_KEY = (process.env.DIFY_API_KEY || "").trim();
+// Always read the current environment variable
+function getDifyApiKey() {
+  return (process.env.DIFY_API_KEY || "").trim();
+}
 
-const PORT = process.env.PORT || 3000;
-
-// Configuration check
+// Check configuration
 function requireConfig(req, res, next) {
-  const envKeyLoaded = Boolean(
-    process.env.DIFY_API_KEY?.trim()
-  );
+  const apiKey = getDifyApiKey();
 
-  const startupKeyLoaded = Boolean(
-    DIFY_API_KEY
-  );
-
-  console.log("[GuestPulse Config Check]", {
+  console.log("[GuestPulse Config]", {
     route: req.originalUrl,
-    envKeyLoaded,
-    startupKeyLoaded,
+    configured: Boolean(apiKey),
     pid: process.pid
   });
 
-  if (!startupKeyLoaded) {
+  if (!apiKey) {
     return res.status(500).json({
-      error: "DIFY_API_KEY is not configured on the server."
+      error: "DIFY_API_KEY is missing in Render Environment Variables."
     });
   }
 
   next();
 }
 
-// Dify API request
+// Dify API request helper
 async function difyRequest(url, options) {
   const response = await fetch(url, options);
-
   const raw = await response.text();
 
   let data;
@@ -65,12 +59,16 @@ async function difyRequest(url, options) {
   }
 
   if (!response.ok) {
-    const message =
+    console.error("[Dify API Error]", {
+      status: response.status,
+      message: data.message || data.error || "Unknown Dify error"
+    });
+
+    throw new Error(
       data.message ||
       data.error ||
-      `Dify returned HTTP ${response.status}`;
-
-    throw new Error(message);
+      `Dify returned HTTP ${response.status}`
+    );
   }
 
   return data;
@@ -83,6 +81,8 @@ app.post(
   upload.single("file"),
   async (req, res) => {
     try {
+      const apiKey = getDifyApiKey();
+
       const guestFeedback = (
         req.body.guest_feedback || ""
       ).trim();
@@ -97,14 +97,14 @@ app.post(
 
       if (guestFeedback && file) {
         return res.status(400).json({
-          error: "Please use either pasted text or one uploaded file per analysis."
+          error: "Please use either pasted text or one uploaded file."
         });
       }
 
       const user = "guestpulse-dashboard-user";
       const inputs = {};
 
-      // File upload
+      // Upload file to Dify if necessary
       if (file) {
         const form = new FormData();
 
@@ -123,34 +123,31 @@ app.post(
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${DIFY_API_KEY}`
+              Authorization: `Bearer ${apiKey}`
             },
             body: form
           }
         );
 
-        inputs.feedback_files = [
-          {
-            type: "document",
-            transfer_method: "local_file",
-            upload_file_id: uploaded.id
-          }
-        ];
+        inputs.feedback_files = [{
+          type: "document",
+          transfer_method: "local_file",
+          upload_file_id: uploaded.id
+        }];
 
       } else {
-        // Text input
         inputs.guest_feedback = guestFeedback;
       }
 
       // Run Dify workflow
-      console.log("[GuestPulse] Sending request to Dify");
+      console.log("[GuestPulse] Sending feedback to Dify");
 
       const run = await difyRequest(
         `${DIFY_BASE_URL}/workflows/run`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${DIFY_API_KEY}`,
+            Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
@@ -160,8 +157,6 @@ app.post(
           })
         }
       );
-
-      console.log("[GuestPulse] Dify response received");
 
       if (
         run.data &&
@@ -207,18 +202,18 @@ app.post(
 
       if (
         !structured ||
-        typeof structured !== "object"
+        typeof structured !== "object" ||
+        Array.isArray(structured)
       ) {
         return res.status(502).json({
-          error:
-            "Dify completed, but no structured_data object was returned. Check the Output node and Variable Aggregator 2.",
-          report,
-          raw_outputs: outputs
+          error: "Dify completed but did not return valid structured data.",
+          report
         });
       }
 
-      // Successful response
-      res.json({
+      console.log("[GuestPulse] Analysis completed successfully");
+
+      return res.json({
         success: true,
         report,
         data: structured,
@@ -227,23 +222,16 @@ app.post(
             run.workflow_run_id ||
             (run.data && run.data.id) ||
             null,
-
           total_tokens:
-            (run.data && run.data.total_tokens) ||
-            null
+            (run.data && run.data.total_tokens) || null
         }
       });
 
     } catch (error) {
-      console.error(
-        "GuestPulse analysis error:",
-        error
-      );
+      console.error("[GuestPulse analysis error]", error.message);
 
-      res.status(502).json({
-        error:
-          error.message ||
-          "Could not complete the analysis."
+      return res.status(502).json({
+        error: error.message || "Could not complete the analysis."
       });
     }
   }
@@ -253,22 +241,22 @@ app.post(
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
-    configured: Boolean(DIFY_API_KEY)
+    configured: Boolean(getDifyApiKey()),
+    pid: process.pid
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(
-    `GuestPulse is running at http://localhost:${PORT}`
-  );
+// Start server - only one listener
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`GuestPulse running on port ${PORT}`);
 
   console.log("[GuestPulse Startup]", {
-    apiKeyConfigured: Boolean(DIFY_API_KEY),
+    apiKeyConfigured: Boolean(getDifyApiKey()),
     baseUrlConfigured: Boolean(DIFY_BASE_URL),
     pid: process.pid
   });
 });
+
 
 
 app.listen(PORT, () => {
